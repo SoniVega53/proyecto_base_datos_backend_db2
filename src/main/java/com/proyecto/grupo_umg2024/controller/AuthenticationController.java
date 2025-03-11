@@ -43,8 +43,18 @@ public class AuthenticationController {
     @PostMapping("login")
     public ResponseEntity<BaseResponse> login(@RequestBody LoginRequest request) {
         try {
-            return ResponseEntity.ok(BaseResponse.builder().code("200").message("Inicio Correctamente")
-                    .entity(service.login(request)).build());
+            User user = service.getFindUncle(request.getUsername());
+            if (user != null) {
+                if (user.getPassword().equals(request.getPassword())) {
+                    return ResponseEntity.ok(BaseResponse.builder().code("200").message("Se Inicio Sesion Correctamente")
+                            .entity(user).build());
+                }else{
+                    return ResponseEntity.ok(BaseResponse.builder().code("400").message("Contraseña Incorrecta, Porfavor verifique.")
+                            .entity(user).build());
+                }
+            }
+            return ResponseEntity.ok(BaseResponse.builder().code("400").message("Este Usuario No existe")
+                            .entity(user).build());
         } catch (Exception e) {
             return ResponseEntity.ok(BaseResponse.builder().code("400").message("Usuario no Existe o Contraseña es invalida").build());
         }

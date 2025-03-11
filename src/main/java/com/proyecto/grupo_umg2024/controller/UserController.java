@@ -4,8 +4,6 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,9 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.google.gson.Gson;
 import com.proyecto.grupo_umg2024.model.auth.RegisterRequest;
-import com.proyecto.grupo_umg2024.model.entity.Articles;
 import com.proyecto.grupo_umg2024.model.entity.BaseResponse;
 import com.proyecto.grupo_umg2024.model.entity.User;
 import com.proyecto.grupo_umg2024.service.UserService;
@@ -34,8 +30,6 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
     private final UserService service;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     @GetMapping("admin/user/see")
     public List<User> getDataList() {
@@ -120,7 +114,7 @@ public class UserController {
 
     public boolean checkPassword(String rawPassword, String encodedPassword) {
         try {
-            return passwordEncoder.matches(rawPassword.trim(), encodedPassword);
+            return rawPassword.equals(encodedPassword);
         } catch (Exception e) {
             return false;
         }
