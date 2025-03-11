@@ -11,6 +11,7 @@ import com.proyecto.grupo_umg2024.model.auth.LoginRequest;
 import com.proyecto.grupo_umg2024.model.auth.RegisterRequest;
 import com.proyecto.grupo_umg2024.model.entity.BaseResponse;
 import com.proyecto.grupo_umg2024.model.entity.User;
+import com.proyecto.grupo_umg2024.model.entity.UserResponse;
 import com.proyecto.grupo_umg2024.service.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -44,17 +45,19 @@ public class AuthenticationController {
     public ResponseEntity<BaseResponse> login(@RequestBody LoginRequest request) {
         try {
             User user = service.getFindUncle(request.getUsername());
+            
             if (user != null) {
+                UserResponse resp = new UserResponse(user.getUsername(),user.getName(),user.getLastname(),user.getEmail(),user.getRol());
                 if (user.getPassword().equals(request.getPassword())) {
                     return ResponseEntity.ok(BaseResponse.builder().code("200").message("Se Inicio Sesion Correctamente")
-                            .entity(user).build());
+                            .entity(resp).build());
                 }else{
                     return ResponseEntity.ok(BaseResponse.builder().code("400").message("Contraseña Incorrecta, Porfavor verifique.")
-                            .entity(user).build());
+                            .entity(resp).build());
                 }
             }
             return ResponseEntity.ok(BaseResponse.builder().code("400").message("Este Usuario No existe")
-                            .entity(user).build());
+                            .entity(null).build());
         } catch (Exception e) {
             return ResponseEntity.ok(BaseResponse.builder().code("400").message("Usuario no Existe o Contraseña es invalida").build());
         }

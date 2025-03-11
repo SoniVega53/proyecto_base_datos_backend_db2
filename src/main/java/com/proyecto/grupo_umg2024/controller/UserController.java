@@ -101,10 +101,10 @@ public class UserController {
     }
 
     @PostMapping("user/usuario")
-    public ResponseEntity<BaseResponse> login(@RequestParam String token) {
+    public ResponseEntity<BaseResponse> login(@RequestParam String usuario) {
         try {
             return ResponseEntity.ok(BaseResponse.builder().code("200").message("Inicio Correctamente")
-                    .entity(service.obtenerUser(token)).build());
+                    .entity(service.obtenerUser(usuario)).build());
         } catch (Exception e) {
             return ResponseEntity.ok(
                     BaseResponse.builder().code("400").message("Usuario no Existe o Contraseña es invalida").build());
