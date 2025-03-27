@@ -1,4 +1,4 @@
-package com.proyecto.grupo_umg2024.model.auth;
+package com.proyecto.grupo_umg2025.model.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

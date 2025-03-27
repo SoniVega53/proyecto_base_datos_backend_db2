@@ -1,4 +1,4 @@
-package com.proyecto.grupo_umg2024.service;
+package com.proyecto.grupo_umg2025.service;
 
 import java.util.List;
 

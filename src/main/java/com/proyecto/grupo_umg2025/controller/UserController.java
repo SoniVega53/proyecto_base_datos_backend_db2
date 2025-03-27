@@ -1,4 +1,4 @@
-package com.proyecto.grupo_umg2024.controller;
+package com.proyecto.grupo_umg2025.controller;
 
 import java.util.List;
 
@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.proyecto.grupo_umg2024.model.auth.RegisterRequest;
-import com.proyecto.grupo_umg2024.model.entity.BaseResponse;
-import com.proyecto.grupo_umg2024.model.entity.User;
-import com.proyecto.grupo_umg2024.service.UserService;
+import com.proyecto.grupo_umg2025.model.auth.RegisterRequest;
+import com.proyecto.grupo_umg2025.model.entity.BaseResponse;
+import com.proyecto.grupo_umg2025.model.entity.User;
+import com.proyecto.grupo_umg2025.service.UserService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -72,7 +72,7 @@ public class UserController {
     }
 
 
-@PostMapping("user/usuario/update/password/{id}")
+    @PostMapping("user/usuario/update/password/{id}")
     public ResponseEntity<BaseResponse> updateUsuarioPassword(@PathVariable Long id,
             @RequestBody RegisterRequest user) {
         try {

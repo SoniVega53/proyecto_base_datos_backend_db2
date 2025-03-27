@@ -1,4 +1,4 @@
-package com.proyecto.grupo_umg2024.model.entity;
+package com.proyecto.grupo_umg2025.model.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

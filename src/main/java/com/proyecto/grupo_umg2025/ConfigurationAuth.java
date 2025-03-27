@@ -1,12 +1,12 @@
-package com.proyecto.grupo_umg2024;
+package com.proyecto.grupo_umg2025;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.proyecto.grupo_umg2024.model.RoleUser;
-import com.proyecto.grupo_umg2024.model.auth.RegisterRequest;
-import com.proyecto.grupo_umg2024.service.UserService;
+import com.proyecto.grupo_umg2025.model.RoleUser;
+import com.proyecto.grupo_umg2025.model.auth.RegisterRequest;
+import com.proyecto.grupo_umg2025.service.UserService;
 
 import lombok.RequiredArgsConstructor;
 
