@@ -1,5 +1,6 @@
 package com.proyecto.grupo_umg2025.model.entity;
 
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserResponse {
-    private String user;
-    private String host;
+public class PermisosUsuario {
+    private List<String> permisos;
 }
