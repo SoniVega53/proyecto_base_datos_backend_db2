@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.proyecto.grupo_umg2025.model.auth.LoginRequest;
+import com.proyecto.grupo_umg2025.model.auth.PasswordEncryptionService;
 import com.proyecto.grupo_umg2025.model.entity.BaseResponse;
 import com.proyecto.grupo_umg2025.model.entity.UserResponse;
 import com.proyecto.grupo_umg2025.service.DatabaseService;
@@ -30,19 +30,26 @@ public class AuthenticationController {
     @Autowired
     private DatabaseService databaseService;
 
+    private PasswordEncryptionService passwordEncryptionService;
+
+
     @Autowired
     private JdbcTemplate jdbcTemplateMain;
 
     @PostMapping("/login")
+    @SuppressWarnings("static-access")
     public ResponseEntity<BaseResponse> login(@RequestBody LoginRequest loginRequest) {
         try {
             
-            DataSource data = databaseService.createDataSource(loginRequest.getUsername(), loginRequest.getPassword());
+            DataSource data = databaseService.createDataSourceNoEncry(loginRequest.getUsername(), loginRequest.getPassword());
             System.err.println(data.getConnection());
             UserResponse response = null;
+            
+            String encryptedPassword = passwordEncryptionService.encrypt(loginRequest.getPassword());
             for (UserResponse item : databaseService.listUser()) {
                 if (loginRequest.getUsername().equals(item.getUser())){
                     response = item;
+                    response.setPassword(encryptedPassword);
                 }
             }
 
@@ -50,7 +57,7 @@ public class AuthenticationController {
                     .entity(response).build());
         } catch (Exception e) {
             return ResponseEntity.ok(
-                    BaseResponse.builder().code("400").message("Usuario no Existe o Contraseña es invalida").build());
+                    BaseResponse.builder().code("400").message("Usuario no Existe o Contraseña es invalida").entity(e.getMessage()).build());
         }
     }
 

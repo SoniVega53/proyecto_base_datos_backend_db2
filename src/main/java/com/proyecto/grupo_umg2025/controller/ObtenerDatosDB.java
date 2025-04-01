@@ -4,19 +4,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.google.gson.Gson;
 import com.proyecto.grupo_umg2025.model.entity.BaseResponse;
 import com.proyecto.grupo_umg2025.service.DatabaseService;
 
@@ -32,7 +28,7 @@ public class ObtenerDatosDB {
     @Autowired
     private DatabaseService databaseService;
 
-    @GetMapping("/obtenerBasesDeDatos")
+    @PostMapping("/obtenerBasesDeDatos")
     public ResponseEntity<BaseResponse> obtenerBasesDeDatos(@RequestParam String username,
             @RequestParam String password) {
         try {
@@ -46,7 +42,7 @@ public class ObtenerDatosDB {
         }
     }
 
-    @GetMapping("/obtenerTablasDeBase")
+    @PostMapping("/obtenerTablasDeBase")
     public ResponseEntity<BaseResponse> obtenerTablasDeBase(@RequestParam String username,
             @RequestParam String password, @RequestParam String nombreBaseDeDatos) {
         try {
@@ -62,7 +58,7 @@ public class ObtenerDatosDB {
         }
     }
 
-    @GetMapping("/obtenerRegistrosDeBase")
+    @PostMapping("/obtenerRegistrosDeBase")
     public ResponseEntity<BaseResponse> obtenerRegistrosDeBase(@RequestParam String username,
             @RequestParam String password, @RequestParam String nombreBaseDeDatos) {
         try {

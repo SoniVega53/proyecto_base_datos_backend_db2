@@ -1,13 +1,13 @@
 package com.proyecto.grupo_umg2025.controller;
 
-import java.lang.reflect.Array;
 import java.util.List;
+
+import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -137,7 +137,7 @@ public class CreateUserAllPermison {
         }
     }
 
-    @GetMapping("/verPermisos")
+    @PostMapping("/verPermisos")
     public ResponseEntity<BaseResponse> verPermisos(@RequestParam String nombre) {
         try {
             String sql = "SHOW GRANTS FOR " + nombre + "@localhost";
@@ -150,7 +150,7 @@ public class CreateUserAllPermison {
         }
     }
 
-    @GetMapping("/verUsuarios")
+    @PostMapping("/verUsuarios")
     public ResponseEntity<BaseResponse> verUsuarios() {
         try {
             return ResponseEntity.ok(
@@ -179,6 +179,24 @@ public class CreateUserAllPermison {
         } catch (Exception e) {
             return ResponseEntity.ok(BaseResponse.builder().code("400").message("Error consultar")
                     .entity(e).build());
+        }
+    }
+    @PostMapping("/cambiarPassword")
+    public ResponseEntity<BaseResponse> cambiarPassword(@RequestParam String username,
+            @RequestParam String password, @RequestParam String newPassword) {
+        try {
+            String sql =  "ALTER USER '"+username+"'@'localhost' IDENTIFIED BY '"+newPassword+"'";
+
+            DataSource data = databaseService.createDataSource(username, password);
+            System.err.println(data.getConnection());
+           
+
+            return ResponseEntity.ok(
+                        BaseResponse.builder().code("200").message("Contraseña cambiada exitosamente")
+                                .entity(jdbcTemplateMain.update(sql)).build());
+        } catch (Exception e) {
+            return ResponseEntity.ok(BaseResponse.builder().code("400").message("Verifique su contraseña")
+                    .entity(e.getMessage()).build());
         }
     }
 
