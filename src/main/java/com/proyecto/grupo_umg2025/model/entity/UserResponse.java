@@ -1,9 +1,8 @@
 package com.proyecto.grupo_umg2025.model.entity;
 
-
+import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data

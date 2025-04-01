@@ -68,15 +68,34 @@ public class CreateUserAllPermison {
     }
 
     @PostMapping("/darPermisosUsuarioAll")
-    public ResponseEntity<BaseResponse> darPermisosSeguro(@RequestParam String username,
-            @RequestParam String password, @RequestParam String nombre, @RequestParam String permiso) {
+    public ResponseEntity<BaseResponse> darPermisosSeguroAll(@RequestParam String username,
+            @RequestParam String password, @RequestParam String nombre) {
         try {
             JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(username, password);
 
             String sql = "GRANT ALL PRIVILEGES ON *.* TO " + nombre;
             jdbcTemplate.execute(sql);
             return ResponseEntity.ok(
-                    BaseResponse.builder().code("200").message("Permiso " + permiso + " otorgado a " + nombre).build());
+                    BaseResponse.builder().code("200").message("Permiso otorgado" + nombre).build());
+        } catch (Exception e) {
+            return ResponseEntity.ok(BaseResponse.builder().code("400").message("Error al otorgar permisos")
+                    .entity(e).build());
+        }
+    }
+    @PostMapping("/darPermisosUsuario")
+    public ResponseEntity<BaseResponse> darPermisosSeguro(@RequestParam String username,
+            @RequestParam String password, @RequestParam String nombre, @RequestParam PermisosUsuario permiso) {
+        try {
+            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(username, password);
+
+            if (permiso != null && permiso.getPermisos() != null) {
+                for (String item : permiso.getPermisos()) {
+                    String sql = "GRANT " + item + " ON *.* TO " + nombre;
+                    jdbcTemplate.execute(sql);
+                }
+            }
+            return ResponseEntity.ok(
+                    BaseResponse.builder().code("200").message("Permiso otorgado" + nombre).build());
         } catch (Exception e) {
             return ResponseEntity.ok(BaseResponse.builder().code("400").message("Error al otorgar permisos")
                     .entity(e).build());
@@ -84,12 +103,32 @@ public class CreateUserAllPermison {
     }
 
     @PostMapping("/revocarPermisosUsuarioAll")
-    public ResponseEntity<BaseResponse> revocarPermisosSeguro(@RequestParam String username,
-            @RequestParam String password, @RequestParam String nombre, @RequestParam String permiso) {
+    public ResponseEntity<BaseResponse> revocarPermisosSeguroAll(@RequestParam String username,
+            @RequestParam String password, @RequestParam String nombre) {
         try {
             JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(username, password);
             String sql = "REVOKE ALL PRIVILEGES, GRANT OPTION FROM " + nombre;
             jdbcTemplate.execute(sql);
+            return ResponseEntity.ok(
+                    BaseResponse.builder().code("200").message("Permisos Revocados ").build());
+        } catch (Exception e) {
+            return ResponseEntity.ok(BaseResponse.builder().code("400").message("Error al revocar permisos")
+                    .entity(e).build());
+        }
+    }
+    
+    @PostMapping("/revocarPermisosUsuario")
+    public ResponseEntity<BaseResponse> revocarPermisosSeguro(@RequestParam String username,
+            @RequestParam String password, @RequestParam String nombre, @RequestParam PermisosUsuario permiso) {
+        try {
+            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(username, password);
+
+            if (permiso != null && permiso.getPermisos() != null) {
+                for (String item : permiso.getPermisos()) {
+                    String sql = "REVOKE " + item + " ON *.* FROM " + nombre+"@localhost";
+                    jdbcTemplate.execute(sql);
+                }
+            }
             return ResponseEntity.ok(
                     BaseResponse.builder().code("200").message("Permiso " + permiso + " revocado a " + nombre).build());
         } catch (Exception e) {
