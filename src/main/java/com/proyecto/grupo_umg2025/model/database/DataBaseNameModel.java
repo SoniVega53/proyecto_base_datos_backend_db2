@@ -1,4 +1,4 @@
-package com.proyecto.grupo_umg2025.model.entity;
+package com.proyecto.grupo_umg2025.model.database;
 
 import java.util.List;
 
@@ -9,10 +9,9 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class PermisosUsuario {
-    String username;
-    String password; 
-    List<String> permisos;
+@NoArgsConstructor
+public class DataBaseNameModel {
+    String databaseName;
+    List<TablesNameModel> tables;
 }

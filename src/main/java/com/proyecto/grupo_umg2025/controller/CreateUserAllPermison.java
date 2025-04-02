@@ -1,6 +1,7 @@
 package com.proyecto.grupo_umg2025.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.sql.DataSource;
 
@@ -9,11 +10,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.proyecto.grupo_umg2025.model.auth.LoginRequest;
+import com.proyecto.grupo_umg2025.model.auth.PasswordEncryptionService;
 import com.proyecto.grupo_umg2025.model.entity.BaseResponse;
 import com.proyecto.grupo_umg2025.model.entity.PermisosUsuario;
 import com.proyecto.grupo_umg2025.model.entity.UserResponse;
@@ -32,9 +35,10 @@ public class CreateUserAllPermison {
     @Autowired
     private JdbcTemplate jdbcTemplateMain;
 
+    private PasswordEncryptionService passwordEncryptionService;
+
     @PostMapping("/crearUsuario")
-    public ResponseEntity<BaseResponse> crearUsuarioSeguro(@RequestParam String username,
-            @RequestParam String password, @RequestParam String nombre,
+    public ResponseEntity<BaseResponse> crearUsuarioSeguro(@RequestBody LoginRequest loginRequest, @RequestParam String nombre,
             @RequestParam String pass, @RequestParam PermisosUsuario permiso) {
         try {
             if (!isValidateUsuario(nombre)) {
@@ -46,7 +50,7 @@ public class CreateUserAllPermison {
                                     .entity(new LoginRequest(nombre, "")).build());
                 }
 
-                JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(username, password);
+                JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(loginRequest.getUsername(), loginRequest.getPassword());
 
                 if (permiso != null && permiso.getPermisos() != null) {
                     for (String item : permiso.getPermisos()) {
@@ -67,26 +71,10 @@ public class CreateUserAllPermison {
         }
     }
 
-    @PostMapping("/darPermisosUsuarioAll")
-    public ResponseEntity<BaseResponse> darPermisosSeguroAll(@RequestParam String username,
-            @RequestParam String password, @RequestParam String nombre) {
-        try {
-            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(username, password);
-
-            String sql = "GRANT ALL PRIVILEGES ON *.* TO " + nombre;
-            jdbcTemplate.execute(sql);
-            return ResponseEntity.ok(
-                    BaseResponse.builder().code("200").message("Permiso otorgado" + nombre).build());
-        } catch (Exception e) {
-            return ResponseEntity.ok(BaseResponse.builder().code("400").message("Error al otorgar permisos")
-                    .entity(e).build());
-        }
-    }
     @PostMapping("/darPermisosUsuario")
-    public ResponseEntity<BaseResponse> darPermisosSeguro(@RequestParam String username,
-            @RequestParam String password, @RequestParam String nombre, @RequestParam PermisosUsuario permiso) {
+    public ResponseEntity<BaseResponse> darPermisosSeguro(@RequestParam String nombre, @RequestBody PermisosUsuario permiso) {
         try {
-            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(username, password);
+            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(permiso.getUsername(), permiso.getPassword());
 
             if (permiso != null && permiso.getPermisos() != null) {
                 for (String item : permiso.getPermisos()) {
@@ -95,6 +83,26 @@ public class CreateUserAllPermison {
                 }
             }
             return ResponseEntity.ok(
+                    BaseResponse.builder().code("200").message("Permisos otorgados exitosamente ").build());
+        } catch (Exception e) {
+            return ResponseEntity.ok(BaseResponse.builder().code("400").message(e.getMessage())
+                    .entity(e).build());
+        }
+    }
+
+    @PostMapping("/darPermisosUsuarioBaseDatos")
+    public ResponseEntity<BaseResponse> darPermisosUsuarioBaseDatos(@RequestParam String nombre, @RequestParam String nameDataBase,
+            @RequestBody PermisosUsuario permiso) {
+        try {
+            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(permiso.getUsername(), permiso.getPassword(),nameDataBase);
+
+            if (permiso != null && permiso.getPermisos() != null) {
+                for (String item : permiso.getPermisos()) {
+                    String sql = "GRANT " + item + " ON " + nameDataBase + ".* TO " + nombre;
+                    jdbcTemplate.execute(sql);
+                }
+            }
+            return ResponseEntity.ok(
                     BaseResponse.builder().code("200").message("Permiso otorgado" + nombre).build());
         } catch (Exception e) {
             return ResponseEntity.ok(BaseResponse.builder().code("400").message("Error al otorgar permisos")
@@ -102,50 +110,66 @@ public class CreateUserAllPermison {
         }
     }
 
-    @PostMapping("/revocarPermisosUsuarioAll")
-    public ResponseEntity<BaseResponse> revocarPermisosSeguroAll(@RequestParam String username,
-            @RequestParam String password, @RequestParam String nombre) {
-        try {
-            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(username, password);
-            String sql = "REVOKE ALL PRIVILEGES, GRANT OPTION FROM " + nombre;
-            jdbcTemplate.execute(sql);
-            return ResponseEntity.ok(
-                    BaseResponse.builder().code("200").message("Permisos Revocados ").build());
-        } catch (Exception e) {
-            return ResponseEntity.ok(BaseResponse.builder().code("400").message("Error al revocar permisos")
-                    .entity(e).build());
-        }
-    }
-    
     @PostMapping("/revocarPermisosUsuario")
-    public ResponseEntity<BaseResponse> revocarPermisosSeguro(@RequestParam String username,
-            @RequestParam String password, @RequestParam String nombre, @RequestParam PermisosUsuario permiso) {
+    public ResponseEntity<BaseResponse> revocarPermisosSeguro(@RequestParam String nombre, @RequestBody PermisosUsuario permiso) {
         try {
-            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(username, password);
+            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(permiso.getUsername(), permiso.getPassword());
 
             if (permiso != null && permiso.getPermisos() != null) {
                 for (String item : permiso.getPermisos()) {
-                    String sql = "REVOKE " + item + " ON *.* FROM " + nombre+"@localhost";
+                    String sql = "REVOKE " + item + " ON *.* FROM " + nombre;
                     jdbcTemplate.execute(sql);
                 }
             }
             return ResponseEntity.ok(
-                    BaseResponse.builder().code("200").message("Permiso " + permiso + " revocado a " + nombre).build());
+                    BaseResponse.builder().code("200").message("Permisos revocados exitosamente").build());
         } catch (Exception e) {
-            return ResponseEntity.ok(BaseResponse.builder().code("400").message("Error al revocar permisos")
+            return ResponseEntity.ok(BaseResponse.builder().code("400").message("No Se puedo Revocar Permisos, verifique que si existan permisos")
+                    .entity(e).build());
+        }
+    }
+
+    @PostMapping("/revocarPermisosUsuarioBaseDatos")
+    public ResponseEntity<BaseResponse> revocarPermisosUsuarioBaseDatos( @RequestParam String nombre, @RequestParam String nameDataBase, @RequestBody PermisosUsuario permiso) {
+        try {
+            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(permiso.getUsername(), permiso.getPassword());
+
+            if (permiso != null && permiso.getPermisos() != null) {
+                for (String item : permiso.getPermisos()) {
+                    String sql = "REVOKE " + item + " ON "+ nameDataBase + ".* FROM " + nombre;
+                    jdbcTemplate.execute(sql);
+                }
+            }
+            return ResponseEntity.ok(
+                    BaseResponse.builder().code("200").message("Permisos revocados exitosamente").build());
+        } catch (Exception e) {
+            return ResponseEntity.ok(BaseResponse.builder().code("400").message(e.getMessage())
                     .entity(e).build());
         }
     }
 
     @PostMapping("/verPermisos")
-    public ResponseEntity<BaseResponse> verPermisos(@RequestParam String nombre) {
+    public ResponseEntity<BaseResponse> verPermisos(@RequestBody LoginRequest loginRequest, @RequestParam String nombre) {
         try {
-            String sql = "SHOW GRANTS FOR " + nombre + "@localhost";
             return ResponseEntity.ok(
                     BaseResponse.builder().code("200").message("Se realizo consulta exitosa")
-                            .entity(jdbcTemplateMain.queryForList(sql)).build());
+                            .entity(databaseService.obtenerSoloNombresPermisos(nombre)).build());
         } catch (Exception e) {
-            return ResponseEntity.ok(BaseResponse.builder().code("400").message("Error consultar")
+            return ResponseEntity.ok(BaseResponse.builder().code("400").message(e.getMessage())
+                    .entity(e).build());
+        }
+    }
+
+    @PostMapping("/verPermisosDataBase")
+    public ResponseEntity<BaseResponse> verPermisosDataBase(@RequestBody LoginRequest loginRequest, @RequestParam String nombre,@RequestParam String nameDataBase) {
+        try {
+            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(loginRequest.getUsername(), loginRequest.getPassword(),nameDataBase);
+
+            return ResponseEntity.ok(
+                    BaseResponse.builder().code("200").message("Se realizo consulta exitosa")
+                            .entity(databaseService.obtenerSoloNombresPermisos(nombre,jdbcTemplate)).build());
+        } catch (Exception e) {
+            return ResponseEntity.ok(BaseResponse.builder().code("400").message(e.getMessage())
                     .entity(e).build());
         }
     }
@@ -163,37 +187,39 @@ public class CreateUserAllPermison {
     }
 
     @PostMapping("/eliminarUsurio")
-    public ResponseEntity<BaseResponse> eliminarUsurio(@RequestParam String username,
-            @RequestParam String password, @RequestParam String nombre) {
+    public ResponseEntity<BaseResponse> eliminarUsurio(@RequestBody LoginRequest loginRequest, @RequestParam String nombre) {
         try {
-            if (username.equals("root")) {
+            if (loginRequest.getUsername().equals("root")) {
                 String sql = "DROP USER " + nombre;
+                jdbcTemplateMain.execute(sql);
                 return ResponseEntity.ok(
-                        BaseResponse.builder().code("200").message("Se elimino exitosamente")
-                                .entity(jdbcTemplateMain.queryForList(sql)).build());
+                        BaseResponse.builder().code("200").message("Se elimino exitosamente").build());
             }
 
             return ResponseEntity.ok(
                     BaseResponse.builder().code("400").message("No tiene los permisos para eliminar Usuario")
-                            .entity(new LoginRequest(username,"")).build());
+                            .entity(new LoginRequest(loginRequest.getUsername(), "")).build());
         } catch (Exception e) {
-            return ResponseEntity.ok(BaseResponse.builder().code("400").message("Error consultar")
+            return ResponseEntity.ok(BaseResponse.builder().code("400").message(e.getMessage())
                     .entity(e).build());
         }
     }
+
     @PostMapping("/cambiarPassword")
-    public ResponseEntity<BaseResponse> cambiarPassword(@RequestParam String username,
-            @RequestParam String password, @RequestParam String newPassword) {
+    public ResponseEntity<BaseResponse> cambiarPassword(@RequestBody LoginRequest loginRequest, @RequestParam String validPassword, @RequestParam String newPassword) {
         try {
-            String sql =  "ALTER USER '"+username+"'@'localhost' IDENTIFIED BY '"+newPassword+"'";
+            String decryptedPassword = passwordEncryptionService.decrypt(loginRequest.getPassword());
+            if (decryptedPassword.equals(validPassword)) {
+                String sql = "ALTER USER '" + loginRequest.getUsername() + "'@'localhost' IDENTIFIED BY '" + newPassword + "'";
 
-            DataSource data = databaseService.createDataSource(username, password);
-            System.err.println(data.getConnection());
-           
-
-            return ResponseEntity.ok(
+                return ResponseEntity.ok(
                         BaseResponse.builder().code("200").message("Contraseña cambiada exitosamente")
                                 .entity(jdbcTemplateMain.update(sql)).build());
+            }
+            return ResponseEntity.ok(
+                    BaseResponse.builder().code("400").message("Contraseña no valida, verifique su Contraseña")
+                            .entity(null).build());
+
         } catch (Exception e) {
             return ResponseEntity.ok(BaseResponse.builder().code("400").message("Verifique su contraseña")
                     .entity(e.getMessage()).build());

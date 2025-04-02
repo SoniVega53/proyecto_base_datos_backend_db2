@@ -75,7 +75,7 @@ public class AuthenticationController {
                     .entity(new LoginRequest(loginRequest.getUsername(), "")).build());
         } catch (Exception e) {
             return ResponseEntity.ok(
-                    BaseResponse.builder().code("400").message("Usuario no Existe o Contraseña es invalida").build());
+                    BaseResponse.builder().code("400").message(e.getMessage()).build());
         }
     }
 
