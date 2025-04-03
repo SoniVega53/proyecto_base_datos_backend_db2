@@ -16,10 +16,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.google.gson.Gson;
 import com.proyecto.grupo_umg2025.model.auth.LoginRequest;
 import com.proyecto.grupo_umg2025.model.database.DataBaseNameModel;
+import com.proyecto.grupo_umg2025.model.database.QueryResponseModel;
 import com.proyecto.grupo_umg2025.model.database.TablesNameModel;
 import com.proyecto.grupo_umg2025.model.entity.BaseResponse;
+import com.proyecto.grupo_umg2025.model.entity.EjecutarQueryModel;
 import com.proyecto.grupo_umg2025.service.DatabaseService;
 
 import jakarta.transaction.Transactional;
@@ -49,7 +52,7 @@ public class ObtenerDatosDB {
     }
 
     @PostMapping("/obtenerTablasDeBaseAll")
-    public ResponseEntity<BaseResponse> obtenerTablasDeBase(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<BaseResponse> obtenerTablasDeBaseAll(@RequestBody LoginRequest loginRequest) {
         try {
             List<DataBaseNameModel> baseNameModelList = new ArrayList<>();
             JdbcTemplate jdbcTemplateDB = databaseService.createJdbcTemplate(
@@ -88,6 +91,40 @@ public class ObtenerDatosDB {
 
             return ResponseEntity.ok(BaseResponse.builder().code("200").message("Consulta exitosa")
                     .entity(baseNameModelList).build());
+        } catch (Exception e) {
+            return ResponseEntity.ok(BaseResponse.builder().code("400").message("Error al obtener Tabla")
+                    .entity(e).build());
+        }
+    }
+
+    @PostMapping("/obtenerTablasDeBase")
+    public ResponseEntity<BaseResponse> obtenerTablasDeBase(@RequestBody LoginRequest loginRequest,@RequestParam String nameDataBase ) {
+        try {
+    
+            String sqlTables = "SHOW TABLES";
+
+            DataBaseNameModel baseNameModel = new DataBaseNameModel();
+            baseNameModel.setDatabaseName(nameDataBase);
+            if (!nameDataBase.equals("information_schema") && !nameDataBase.equals("performance_schema")) {
+                JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(loginRequest.getUsername(),
+                        loginRequest.getPassword(), nameDataBase);
+                List<Map<String, Object>> tablas = jdbcTemplate.queryForList(sqlTables);
+
+                if (!tablas.isEmpty()) {
+                    System.out.println("Keys disponibles: " + tablas.get(0).keySet());
+                }
+
+                String keyName = tablas.isEmpty() ? "" : tablas.get(0).keySet().iterator().next();
+
+                List<TablesNameModel> tablesList = tablas.stream()
+                        .map(row -> new TablesNameModel(row.get(keyName).toString()))
+                        .collect(Collectors.toList());
+
+                baseNameModel.setTables(tablesList);
+            }
+
+            return ResponseEntity.ok(BaseResponse.builder().code("200").message("Consulta exitosa")
+                    .entity(baseNameModel).build());
         } catch (Exception e) {
             return ResponseEntity.ok(BaseResponse.builder().code("400").message("Error al obtener Tabla")
                     .entity(e).build());
@@ -140,23 +177,61 @@ public class ObtenerDatosDB {
     @Transactional
     @PostMapping("/ejecutarQuery")
     public ResponseEntity<BaseResponse> ejecutarQuery(
-            @RequestBody LoginRequest loginRequest,
-            @RequestParam String query) {
+            @RequestBody EjecutarQueryModel loginRequest) {
         try {
-            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(loginRequest.getUsername(),
-                    loginRequest.getPassword());
+            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(loginRequest.getUsername(),loginRequest.getPassword(),loginRequest.getNameDataBase());
 
-            List<Map<String, Object>> resultados = jdbcTemplate.queryForList(query);
+            List<QueryResponseModel> result =  new ArrayList<>();
+          
+            String[] consultas = loginRequest.getQuery().toString().split(";");
+
+            for (String string : consultas) {
+                String[] typeQuery = string.split(" ");
+
+
+                if (validTipyQuery(string, "SELECT")) {
+                    List<Map<String, Object>> resultados = jdbcTemplate.queryForList(string);
+                    result.add(new QueryResponseModel(typeQuery[0],"Consulta Exitosa",resultados));
+
+                }else if(validTipyQuery(string, "INSERT") || validTipyQuery(string, "UPDATE") || validTipyQuery(string, "DELETE")){
+                    String message = validTipyQuery(string, "INSERT") ? "Se Inserto correctamente" : validTipyQuery(string, "UPDATE") ?
+                        "Se Actualizo correctamente" : "Se Elimino correctamente";
+                    jdbcTemplate.update(string);
+
+                    String[] tables = string.split(" ");
+
+                    String select = validTipyQuery(string, "INSERT") ?  tables[2] : validTipyQuery(string, "UPDATE") ?
+                        tables[1] :  tables[2];
+
+                    List<Map<String, Object>> resultados = jdbcTemplate.queryForList("SELECT * FROM " + select + ";");
+                    result.add(new QueryResponseModel(typeQuery[0],message, resultados));
+                }else if(validTipyQuery(string, "CREATE") || validTipyQuery(string, "DROP") || validTipyQuery(string, "ALTER")){
+                    String message = validTipyQuery(string, "CREATE") ? "Se creo correctamente" : validTipyQuery(string, "DROP") ?
+                        "Se Elimno Tabla correctamente" : "Se Altero correctamente";
+                    jdbcTemplate.execute(string);
+                    result.add(new QueryResponseModel(typeQuery[0],message, null));
+                }else{
+                    List<Map<String, Object>> resultados = jdbcTemplate.queryForList(string);
+
+                    result.add(new QueryResponseModel(typeQuery[0],"Consulta Exitosa", resultados));
+                }
+
+               
+            }
 
             return ResponseEntity.ok(
                     BaseResponse.builder().code("200").message("Consulta ejecutada correctamente")
-                            .entity(resultados).build());
+                            .entity(result).build());
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    BaseResponse.builder().code("500").message("Error al procesar la solicitud").entity(e.getMessage())
+                    BaseResponse.builder().code("400").message("Error al procesar la solicitud").entity(e.getMessage())
                             .build());
         }
+    }
+
+    private boolean validTipyQuery(String value,String type){
+        return value.trim().toLowerCase().startsWith(type.toLowerCase());
     }
 
 }
