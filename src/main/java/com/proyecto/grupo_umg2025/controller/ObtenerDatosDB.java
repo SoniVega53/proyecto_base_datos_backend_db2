@@ -98,9 +98,10 @@ public class ObtenerDatosDB {
     }
 
     @PostMapping("/obtenerTablasDeBase")
-    public ResponseEntity<BaseResponse> obtenerTablasDeBase(@RequestBody LoginRequest loginRequest,@RequestParam String nameDataBase ) {
+    public ResponseEntity<BaseResponse> obtenerTablasDeBase(@RequestBody LoginRequest loginRequest,
+            @RequestParam String nameDataBase) {
         try {
-    
+
             String sqlTables = "SHOW TABLES";
 
             DataBaseNameModel baseNameModel = new DataBaseNameModel();
@@ -179,44 +180,47 @@ public class ObtenerDatosDB {
     public ResponseEntity<BaseResponse> ejecutarQuery(
             @RequestBody EjecutarQueryModel loginRequest) {
         try {
-            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(loginRequest.getUsername(),loginRequest.getPassword(),loginRequest.getNameDataBase());
+            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(loginRequest.getUsername(),
+                    loginRequest.getPassword(), loginRequest.getNameDataBase());
 
-            List<QueryResponseModel> result =  new ArrayList<>();
-          
+            List<QueryResponseModel> result = new ArrayList<>();
+
             String[] consultas = loginRequest.getQuery().toString().split(";");
 
             for (String string : consultas) {
                 String[] typeQuery = string.split(" ");
 
-
                 if (validTipyQuery(string, "SELECT")) {
                     List<Map<String, Object>> resultados = jdbcTemplate.queryForList(string);
-                    result.add(new QueryResponseModel(typeQuery[0],"Consulta Exitosa",resultados));
+                    result.add(new QueryResponseModel(typeQuery[0], "Consulta Exitosa", resultados));
 
-                }else if(validTipyQuery(string, "INSERT") || validTipyQuery(string, "UPDATE") || validTipyQuery(string, "DELETE")){
-                    String message = validTipyQuery(string, "INSERT") ? "Se Inserto correctamente" : validTipyQuery(string, "UPDATE") ?
-                        "Se Actualizo correctamente" : "Se Elimino correctamente";
+                } else if (validTipyQuery(string, "INSERT") || validTipyQuery(string, "UPDATE")
+                        || validTipyQuery(string, "DELETE")) {
+                    String message = validTipyQuery(string, "INSERT") ? "Se Inserto correctamente"
+                            : validTipyQuery(string, "UPDATE") ? "Se Actualizo correctamente"
+                                    : "Se Elimino correctamente";
                     jdbcTemplate.update(string);
 
                     String[] tables = string.split(" ");
 
-                    String select = validTipyQuery(string, "INSERT") ?  tables[2] : validTipyQuery(string, "UPDATE") ?
-                        tables[1] :  tables[2];
+                    String select = validTipyQuery(string, "INSERT") ? tables[2]
+                            : validTipyQuery(string, "UPDATE") ? tables[1] : tables[2];
 
                     List<Map<String, Object>> resultados = jdbcTemplate.queryForList("SELECT * FROM " + select + ";");
-                    result.add(new QueryResponseModel(typeQuery[0],message, resultados));
-                }else if(validTipyQuery(string, "CREATE") || validTipyQuery(string, "DROP") || validTipyQuery(string, "ALTER")){
-                    String message = validTipyQuery(string, "CREATE") ? "Se creo correctamente" : validTipyQuery(string, "DROP") ?
-                        "Se Elimno Tabla correctamente" : "Se Altero correctamente";
+                    result.add(new QueryResponseModel(typeQuery[0], message, resultados));
+
+                } else if (validTipyQuery(string, "CREATE") || validTipyQuery(string, "DROP")
+                        || validTipyQuery(string, "ALTER")) {
+                    String message = validTipyQuery(string, "CREATE") ? "Se creo correctamente"
+                            : validTipyQuery(string, "DROP") ? "Se Elimno correctamente" : "Se Altero correctamente";
                     jdbcTemplate.execute(string);
-                    result.add(new QueryResponseModel(typeQuery[0],message, null));
-                }else{
+                    result.add(new QueryResponseModel(typeQuery[0], message, null));
+                } else {
                     List<Map<String, Object>> resultados = jdbcTemplate.queryForList(string);
 
-                    result.add(new QueryResponseModel(typeQuery[0],"Consulta Exitosa", resultados));
+                    result.add(new QueryResponseModel(typeQuery[0], "Consulta Exitosa", resultados));
                 }
 
-               
             }
 
             return ResponseEntity.ok(
@@ -230,7 +234,62 @@ public class ObtenerDatosDB {
         }
     }
 
-    private boolean validTipyQuery(String value,String type){
+    @Transactional
+    @PostMapping("/ejecutarQueryMain")
+    public ResponseEntity<BaseResponse> ejecutarQueryMain(
+            @RequestBody EjecutarQueryModel loginRequest) {
+        try {
+            JdbcTemplate jdbcTemplate = databaseService.createJdbcTemplate(loginRequest.getUsername(),
+                    loginRequest.getPassword());
+
+            List<QueryResponseModel> result = new ArrayList<>();
+
+            String[] consultas = loginRequest.getQuery().toString().split(";");
+
+            for (String string : consultas) {
+                String[] typeQuery = string.split(" ");
+
+                if (validTipyQuery(string, "CREATE") || validTipyQuery(string, "DROP")
+                        || validTipyQuery(string, "ALTER") || validTipyQuery(string, "USER")) {
+                    String message = validTipyQuery(string, "CREATE") ? "Se creo correctamente"
+                            : validTipyQuery(string, "DROP") ? "Se Elimno correctamente" :  validTipyQuery(string, "ALTER") ? "Se Altero correctamente":"Consulta Exitosa";
+                    jdbcTemplate.execute(string);
+                    result.add(new QueryResponseModel(typeQuery[0], message, null));
+                } else if (validTipyQuery(string, "INSERT") || validTipyQuery(string, "UPDATE")
+                        || validTipyQuery(string, "DELETE")) {
+                    String message = validTipyQuery(string, "INSERT") ? "Se Inserto correctamente"
+                            : validTipyQuery(string, "UPDATE") ? "Se Actualizo correctamente"
+                                    : "Se Elimino correctamente";
+                    jdbcTemplate.update(string);
+
+                    String[] tables = string.split(" ");
+
+                    String select = validTipyQuery(string, "INSERT") ? tables[2]
+                            : validTipyQuery(string, "UPDATE") ? tables[1] : tables[2];
+
+                    List<Map<String, Object>> resultados = jdbcTemplate.queryForList("SELECT * FROM " + select + ";");
+                    result.add(new QueryResponseModel(typeQuery[0], message, resultados));
+
+                } else {
+                    List<Map<String, Object>> resultados = jdbcTemplate.queryForList(string);
+
+                    result.add(new QueryResponseModel(typeQuery[0], "Consulta Exitosa", resultados));
+                }
+
+            }
+
+            return ResponseEntity.ok(
+                    BaseResponse.builder().code("200").message("Consulta ejecutada correctamente")
+                            .entity(result).build());
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    BaseResponse.builder().code("400").message("Error al procesar la solicitud").entity(e.getMessage())
+                            .build());
+        }
+    }
+
+    private boolean validTipyQuery(String value, String type) {
         return value.trim().toLowerCase().startsWith(type.toLowerCase());
     }
 
