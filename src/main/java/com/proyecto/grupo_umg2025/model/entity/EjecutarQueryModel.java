@@ -16,4 +16,6 @@ public class EjecutarQueryModel {
     String password; 
     String nameDataBase; 
     String query;
+    boolean transaction;
+
 }

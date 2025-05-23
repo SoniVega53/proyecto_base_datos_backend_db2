@@ -27,6 +27,8 @@ public class DatabaseService {
     private JdbcTemplate jdbcTemplateMain;
 
     private PasswordEncryptionService passwordEncryptionService;
+    private String baseSQL = "jdbc:mysql://localhost:3306/";
+    //private String baseSQL = "jdbc:mysql://localhost:6446/";
 
     public DataSource createDataSource(String username, String password) {
         try {
@@ -34,7 +36,7 @@ public class DatabaseService {
 
             DriverManagerDataSource dataSource = new DriverManagerDataSource();
             dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-            dataSource.setUrl("jdbc:mysql://localhost:3306/");
+            dataSource.setUrl(baseSQL);
             dataSource.setUsername(username);
             dataSource.setPassword(decryptedPassword);
 
@@ -49,7 +51,7 @@ public class DatabaseService {
 
             DriverManagerDataSource dataSource = new DriverManagerDataSource();
             dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-            dataSource.setUrl("jdbc:mysql://localhost:3306/");
+            dataSource.setUrl(baseSQL);
             dataSource.setUsername(username);
             dataSource.setPassword(password);
 
@@ -69,7 +71,7 @@ public class DatabaseService {
 
             DriverManagerDataSource dataSource = new DriverManagerDataSource();
             dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-            dataSource.setUrl("jdbc:mysql://localhost:3306/" + databaseName + "?serverTimezone=UTC");
+            dataSource.setUrl(baseSQL + databaseName + "?serverTimezone=UTC");
             dataSource.setUsername(username);
             dataSource.setPassword(decryptedPassword);
 

@@ -210,7 +210,7 @@ public class CreateUserAllPermison {
         try {
             String decryptedPassword = passwordEncryptionService.decrypt(loginRequest.getPassword());
             if (decryptedPassword.equals(validPassword)) {
-                String sql = "ALTER USER '" + loginRequest.getUsername() + "'@'localhost' IDENTIFIED BY '" + newPassword + "'";
+                String sql = "ALTER USER '" + loginRequest.getUsername() + "'@'%' IDENTIFIED BY '" + newPassword + "'";
 
                 return ResponseEntity.ok(
                         BaseResponse.builder().code("200").message("Contraseña cambiada exitosamente")

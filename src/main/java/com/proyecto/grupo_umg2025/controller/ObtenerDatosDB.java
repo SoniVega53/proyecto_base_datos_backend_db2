@@ -1,5 +1,6 @@
 package com.proyecto.grupo_umg2025.controller;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -185,6 +186,15 @@ public class ObtenerDatosDB {
 
             List<QueryResponseModel> result = new ArrayList<>();
 
+            if (loginRequest.isTransaction()) {
+                jdbcTemplate.execute(loginRequest.getQuery());
+                result.add(new QueryResponseModel("Transaction", "Consulta Exitosa: " + loginRequest.getQuery(),null));
+
+                return ResponseEntity.ok(
+                    BaseResponse.builder().code("200").message("Consulta ejecutada correctamente")
+                            .entity(result).build());
+            }
+
             String[] consultas = loginRequest.getQuery().toString().split(";");
 
             for (String string : consultas) {
@@ -215,6 +225,7 @@ public class ObtenerDatosDB {
                             : validTipyQuery(string, "DROP") ? "Se Elimno correctamente" : "Se Altero correctamente";
                     jdbcTemplate.execute(string);
                     result.add(new QueryResponseModel(typeQuery[0], message, null));
+
                 } else {
                     List<Map<String, Object>> resultados = jdbcTemplate.queryForList(string);
 
@@ -244,6 +255,15 @@ public class ObtenerDatosDB {
 
             List<QueryResponseModel> result = new ArrayList<>();
 
+            if (loginRequest.isTransaction()) {
+                jdbcTemplate.execute(loginRequest.getQuery());
+                result.add(new QueryResponseModel("Transaction", "Consulta Exitosa: " + loginRequest.getQuery(),null));
+
+                return ResponseEntity.ok(
+                    BaseResponse.builder().code("200").message("Consulta ejecutada correctamente")
+                            .entity(result).build());
+            }
+
             String[] consultas = loginRequest.getQuery().toString().split(";");
 
             for (String string : consultas) {
@@ -252,7 +272,8 @@ public class ObtenerDatosDB {
                 if (validTipyQuery(string, "CREATE") || validTipyQuery(string, "DROP")
                         || validTipyQuery(string, "ALTER") || validTipyQuery(string, "USER")) {
                     String message = validTipyQuery(string, "CREATE") ? "Se creo correctamente"
-                            : validTipyQuery(string, "DROP") ? "Se Elimno correctamente" :  validTipyQuery(string, "ALTER") ? "Se Altero correctamente":"Consulta Exitosa";
+                            : validTipyQuery(string, "DROP") ? "Se Elimno correctamente"
+                                    : validTipyQuery(string, "ALTER") ? "Se Altero correctamente" : "Consulta Exitosa";
                     jdbcTemplate.execute(string);
                     result.add(new QueryResponseModel(typeQuery[0], message, null));
                 } else if (validTipyQuery(string, "INSERT") || validTipyQuery(string, "UPDATE")
